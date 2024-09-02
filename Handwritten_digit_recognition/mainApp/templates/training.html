@@ -38,12 +38,21 @@
             background-color: #0056b3;
         }
         .form-container {
-            display: flex; /* 使用 Flexbox 布局 */
-            justify-content: center; /* 水平居中 */
-            gap: 20px; /* 设置两个表单之间的间距 */
+            display: flex;
+            justify-content: center;
+            gap: 20px;
         }
         form {
             display: inline-block;
+        }
+        .hidden {
+            display: none;
+        }
+        #loadingMessage {
+            display: none;
+            font-size: 24px;
+            color: #007bff;
+            margin-top: 20px;
         }
     </style>
     <script>
@@ -52,38 +61,36 @@
         }
 
         function updateAction(event) {
-            // 获取输入字段的值
             const taskName = document.getElementById('taskName').value;
             const lr = document.getElementById('lr').value;
             const epoch = document.getElementById('epoch').value;
             const batchsize = document.getElementById('batchsize').value;
 
-            // 验证输入
             if (!taskName || !lr || !epoch || !batchsize) {
                 alert("请填写所有字段");
-                event.preventDefault(); // 阻止表单提交
+                event.preventDefault();
                 return;
             }
 
-            // 验证 lr, epoch, batchsize 是否为有效数字
             if (!isNumeric(lr) || !isNumeric(epoch) || !isNumeric(batchsize) || lr <= 0 || epoch <= 0 || batchsize <= 0) {
                 alert("学习率、训练轮次和批量大小必须是有效的数字");
-                event.preventDefault(); // 阻止表单提交
+                event.preventDefault();
                 return;
             }
 
-            // 拼接查询字符串
             const queryString = `?taskName=${taskName}&lr=${lr}&epoch=${epoch}&batchsize=${batchsize}`;
-
-            // 动态更新表单的 action
             document.getElementById('trainForm').action = `/getParameter/${queryString}`;
+
+            // 隐藏所有页面元素并显示加载消息
+            document.querySelector('.container').classList.add('hidden');
+            document.getElementById('loadingMessage').style.display = 'block';
         }
     </script>
 </head>
 <body>
     <div class="container">
         <h1>创建新模型训练任务</h1>
-        <p>模型训练时间可能较长，请在此页面耐心等候！</p>
+        <p>模型训练时间可能较长，请耐心等候！</p>
         <input type="text" id="taskName" placeholder="训练任务名称" required>
         <input type="text" id="lr" name="lr" placeholder="学习率 (learning rate)" required>
         <input type="number" id="epoch" name="epoch" placeholder="训练轮次 (epoch)" required>
@@ -95,9 +102,10 @@
             </form>
             <form method="post" action="/index/">
                 {% csrf_token %}
-                <button class="button">返回主页</button> <!-- 跳转到主页 -->
+                <button class="button">返回主页</button>
             </form>
         </div>
     </div>
+    <div id="loadingMessage">训练中，请勿离开页面...</div>
 </body>
 </html>

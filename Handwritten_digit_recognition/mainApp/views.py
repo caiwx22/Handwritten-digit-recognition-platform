@@ -30,8 +30,6 @@ def getParameter(request):
     epoch = int(request.GET.get('epoch'))
     batch_size = int(request.GET.get('batchsize'))
 
-    print(task_name)
-
     # 检查任务名称是否唯一，如果不是则重命名
     original_task_name = task_name
     suffix = 1
