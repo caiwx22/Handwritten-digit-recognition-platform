@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Use your model</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f3f3f3;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            color: #555;
+        }
+        .form-container {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .form-container p {
+            text-align: left;
+            margin: 0 0 0 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+        button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #back {
+            width: 95%;
+            margin: 10px 0 10px 0;
+        }
+        /* 手写板样式 */
+        .canvas {
+            display: block;
+            border: 1px solid red;
+        }
+        #clear, #save {
+            width: 16%;
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px 0 0 0;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #clear:hover {
+            background-color: #0056b3;
+        }
+        #save:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script>
+        function validateForm(form) {
+            var fileInput = document.getElementById('image-file');
+            if (fileInput.files.length === 0) {
+                alert('请先选择一个图片文件上传。');
+                return false; // 阻止表单提交
+            }
+
+            var taskName = document.getElementById('taskName').textContent.trim();
+            var modelName = taskName.split(':')[1].trim();
+            form.action = `/upload/?model=${modelName}`;
+
+            return true; // 允许表单提交
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>模型验证</h1>
+        <h2 id="taskName">当前模型: {{ taskName }}</h2>
+        <div class="form-container">
+            <p>您可以选择上传图片:</p>
+            <form id="upload-form" action="/upload/" method="post" enctype="multipart/form-data" onsubmit="return validateForm(this);">
+                {% csrf_token %}
+                <input type="file" id="image-file" name="image" accept="image/*" required>
+                <button type="submit">上传图片</button>
+            </form>
+            <p>或选择直接手写:</p>
+            <div style="text-align: center">
+                <canvas id="canvas" width="400" height="200" style="border:1px solid #000000;">
+                    您的浏览器不支持canvas技术, 请升级或更换浏览器!
+                </canvas>
+                <div>
+                    <button id="clear">清空</button>
+                    <button id="save">识别</button>
+                </div>
+                <form id="signature-form" action="/save_signature/" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="imgData" name="imgData">
+                </form>
+            </div>
+            <form method="post" action="/results/">
+                {% csrf_token %}
+                <button id="back">返回</button>
+            </form>
+        </div>
+    </div>
+    <script type="text/javascript">
+        function WriteFont(id, options) {
+            var self = this;
+            this.canvas = document.getElementById(id);
+            var obj = {
+                canvas: this.canvas,
+                context: this.canvas.getContext("2d"),
+                isWrite: false,
+                lastWriteTime: -1,
+                lastWriteSpeed: 0,
+                lastWriteWidth: 0,
+                canvasWidth: 200,
+                canvasHeight: 200,
+                isShowBorder: true,
+                bgColor: '#fff',
+                borderWidth: 2,
+                borderColor: "#fff",
+                lastPoint: {},
+                writeWidth: 2,
+                maxWriteWidth: 30,
+                minWriteWidth: 1,
+                writeColor: '#000',
+                isWriteName: false
+            }
+
+            for(var name in options) {
+                obj[name] = options[name];
+            }
+
+            this.setLineWidth = function() {
+                var nowTime = new Date().getTime();
+                var diffTime = nowTime - obj.lastWriteTime;
+                obj.lastWriteTime = nowTime;
+                var returnNum = obj.minWriteWidth + (obj.maxWriteWidth - obj.minWriteWidth) * diffTime / 30;
+                if(returnNum < obj.minWriteWidth) {
+                    returnNum = obj.minWriteWidth;
+                } else if(returnNum > obj.maxWriteWidth) {
+                    returnNum = obj.maxWriteWidth;
+                }
+
+                returnNum = returnNum.toFixed(2);
+                if(obj.isWriteName){
+                    obj.context.lineWidth = obj.writeWidth;
+                }else{
+                    obj.context.lineWidth = obj.lastWriteWidth = obj.lastWriteWidth / 4 * 3 + returnNum / 4;
+                }
+            }
+
+            this.writing = function(point) {
+                obj.context.beginPath();
+                obj.context.moveTo(obj.lastPoint.x, obj.lastPoint.y);
+                obj.context.lineTo(point.x, point.y);
+                self.setLineWidth();
+                obj.context.stroke();
+                obj.lastPoint = point;
+                obj.context.closePath();
+            }
+
+            this.writeContextStyle = function() {
+                obj.context.beginPath();
+                obj.context.strokeStyle = obj.writeColor;
+                obj.context.lineCap = 'round';
+                obj.context.lineJoin = "round";
+            }
+
+            this.writeBegin = function(point) {
+                obj.isWrite = true;
+                obj.lastWriteTime = new Date().getTime();
+                obj.lastPoint = point;
+                self.writeContextStyle();
+            }
+
+            this.writeEnd = function() {
+                obj.isWrite = false;
+            }
+
+            this.canvasClear = function() {
+                obj.context.save();
+                obj.context.strokeStyle = '#fff';
+                obj.context.clearRect(0, 0, obj.canvasWidth, obj.canvasHeight);
+                if(obj.isShowBorder && !obj.isWriteName) {
+                    obj.context.beginPath();
+                    var size = obj.borderWidth / 2;
+                    obj.context.moveTo(size, size);
+                    obj.context.lineTo(obj.canvasWidth - size, size);
+                    obj.context.lineTo(obj.canvasWidth - size, obj.canvasHeight - size);
+                    obj.context.lineTo(size, obj.canvasHeight - size);
+                    obj.context.closePath();
+                    obj.context.lineWidth = obj.borderWidth;
+                    obj.context.strokeStyle = obj.borderColor;
+                    obj.context.stroke();
+                    obj.context.moveTo(0, 0);
+                    obj.context.lineTo(obj.canvasWidth, obj.canvasHeight);
+                    obj.context.lineTo(obj.canvasWidth, obj.canvasHeight / 2);
+                    obj.context.lineTo(obj.canvasWidth, obj.canvasHeight / 2);
+                    obj.context.lineTo(0, obj.canvasHeight / 2);
+                    obj.context.lineTo(0, obj.canvasHeight);
+                    obj.context.lineTo(obj.canvasWidth, 0);
+                    obj.context.lineTo(obj.canvasWidth / 2, 0);
+                    obj.context.lineTo(obj.canvasWidth / 2, obj.canvasHeight);
+                    obj.context.stroke();
+                }
+                obj.context.restore();
+            }
+
+            this.canvasInit = function() {
+                this.canvas.width = obj.canvasWidth;
+                this.canvas.height = obj.canvasHeight;
+                obj.context.fillStyle = obj.bgColor; // 设置背景颜色
+                obj.context.fillRect(0, 0, this.canvas.width, this.canvas.height); // 填充背景颜色
+                this.emptyCanvas = this.canvas.toDataURL("image/png");
+            };
+
+            this.canvas.addEventListener('mousedown', function(e) {
+                var point = {x: e.offsetX, y: e.offsetY};
+                self.writeBegin(point);
+            });
+
+            this.canvas.addEventListener('mousemove', function(e) {
+                if(obj.isWrite) {
+                    var point = {x: e.offsetX, y: e.offsetY};
+                    self.writing(point);
+                }
+            });
+
+            this.canvas.addEventListener('mouseup', function() {
+                self.writeEnd();
+            });
+
+            this.canvas.addEventListener('mouseleave', function() {
+                self.writeEnd();
+            });
+
+            this.canvasInit();
+        }
+
+        // 初始化手写板
+        new WriteFont('canvas', {});
+
+        // 清空画布
+        document.getElementById('clear').onclick = function() {
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext('2d');
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = '#fff'; // 清空后重新设置背景颜色为白色
+            context.fillRect(0, 0, canvas.width, canvas.height);
+        };
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        document.getElementById('save').onclick = function() {
+            var canvas = document.getElementById('canvas');
+            var imgData = canvas.toDataURL('image/jpeg');
+
+            // 将图片数据设置到隐藏的表单字段中
+            document.getElementById('imgData').value = imgData;
+
+            // 获取 modelName
+            var taskName = document.getElementById('taskName').textContent.trim();
+            var modelName = taskName.split(':')[1].trim();
+
+            // 更新 form 的 action 属性
+            var form = document.getElementById('signature-form');
+            form.action = `/save_signature/?model=${modelName}`;
+
+            // 提交表单
+            form.submit();
+        };
+    </script>
+</body>
+</html>

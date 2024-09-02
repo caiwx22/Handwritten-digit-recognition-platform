@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f3f3f3;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .form-container {
+            display: flex; /* 使用 Flexbox 布局 */
+            justify-content: center; /* 水平居中 */
+            gap: 20px; /* 设置两个表单之间的间距 */
+        }
+        form {
+            display: inline-block;
+        }
+    </style>
+    <script>
+        function isNumeric(value) {
+            return !isNaN(value) && isFinite(value);
+        }
+
+        function updateAction(event) {
+            // 获取输入字段的值
+            const taskName = document.getElementById('taskName').value;
+            const lr = document.getElementById('lr').value;
+            const epoch = document.getElementById('epoch').value;
+            const batchsize = document.getElementById('batchsize').value;
+
+            // 验证输入
+            if (!taskName || !lr || !epoch || !batchsize) {
+                alert("请填写所有字段");
+                event.preventDefault(); // 阻止表单提交
+                return;
+            }
+
+            // 验证 lr, epoch, batchsize 是否为有效数字
+            if (!isNumeric(lr) || !isNumeric(epoch) || !isNumeric(batchsize) || lr <= 0 || epoch <= 0 || batchsize <= 0) {
+                alert("学习率、训练轮次和批量大小必须是有效的数字");
+                event.preventDefault(); // 阻止表单提交
+                return;
+            }
+
+            // 拼接查询字符串
+            const queryString = `?taskName=${taskName}&lr=${lr}&epoch=${epoch}&batchsize=${batchsize}`;
+
+            // 动态更新表单的 action
+            document.getElementById('trainForm').action = `/getParameter/${queryString}`;
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>创建新模型训练任务</h1>
+        <p>模型训练时间可能较长，请在此页面耐心等候！</p>
+        <input type="text" id="taskName" placeholder="训练任务名称" required>
+        <input type="text" id="lr" name="lr" placeholder="学习率 (learning rate)" required>
+        <input type="number" id="epoch" name="epoch" placeholder="训练轮次 (epoch)" required>
+        <input type="number" id="batchsize" name="batchsize" placeholder="批量大小 (batch size)" required>
+        <div class="form-container">
+            <form id="trainForm" method="post" onsubmit="updateAction(event)">
+                {% csrf_token %}
+                <button class="button" type="submit">开始训练</button>
+            </form>
+            <form method="post" action="/index/">
+                {% csrf_token %}
+                <button class="button">返回主页</button> <!-- 跳转到主页 -->
+            </form>
+        </div>
+    </div>
+</body>
+</html>

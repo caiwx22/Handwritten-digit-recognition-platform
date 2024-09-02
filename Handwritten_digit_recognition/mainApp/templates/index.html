@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f3f3f3;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            color: #555;
+        }
+        .button {
+            width: 100%;
+            display: inline-block;
+            margin: 10px 1px 10px 1px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .form-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        form {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>基于MNIST数据集的手写数字识别平台</h1>
+        <p>姓名: 蔡万栩</p>
+        <p>学号: 2022012087</p>
+        <p>邮箱: caiwx22@mails.tsinghua.edu.cn</p>
+
+        <div class="form-container">
+            <form method="post" action="/training/">
+                {% csrf_token %}
+                <button class="button">前往训练页面</button>
+            </form>
+            <form method="post" action="/results/">
+                {% csrf_token %}
+                <button class="button">前往结果展示页面</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

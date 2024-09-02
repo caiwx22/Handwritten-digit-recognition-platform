@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .table-container {
+            width: 80%;
+            max-width: 1000px;
+            max-height: 700px;
+            overflow-y: auto;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            width: 50px;
+            text-align: center;
+        }
+        a.button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+        }
+        a.button:hover {
+            background-color: #0056b3;
+        }
+        .ope button {
+            width: 100%;
+            display: inline-block;
+            padding: 5px 5px;
+            margin-top: 5px;
+            background-color: #616161;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 4px;
+            text-align: center;
+            border: 0;
+        }
+        .ope button:hover {
+            background-color: #919191;
+        }
+    </style>
+    <script>
+        function addIdxToAction(form) {
+            var row = form.parentNode.parentNode;
+            var cells = row.getElementsByTagName("td");
+            form.action = `/deleteTask/?idx=${cells[0].textContent.trim()}&taskName=${cells[1].textContent.trim()}`;
+            return true;
+        }
+        function addNameToAction(form) {
+            var row = form.parentNode.parentNode;
+            var cells = row.getElementsByTagName("td");
+            form.action = `/useModel/?taskName=${cells[1].textContent.trim()}`;
+            return true;
+        }
+    </script>
+</head>
+<body>
+    <h1>所有训练任务结果</h1>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>任务名称</th>
+                    <th>学习率</th>
+                    <th>训练轮数</th>
+                    <th>批次大小</th>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>耗时(秒)</th>
+                    <th>损失</th>
+                    <th>准确率</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 使用 Django 模板语言遍历所有训练任务 -->
+                {% for task in tasks %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ task.task_name }}</td>
+                    <td>{{ task.lr }}</td>
+                    <td>{{ task.epoch }}</td>
+                    <td>{{ task.batch_size }}</td>
+                    <td>{{ task.start_time }}</td>
+                    <td>{{ task.end_time }}</td>
+                    <td>{{ task.duration }}</td>
+                    <td>{{ task.loss_epoch }}</td>
+                    <td>{{ task.accuracy_epoch }}</td>
+                    <td class="ope">
+                        <form method="post" onsubmit="addIdxToAction(this);">
+                            {% csrf_token %}
+                            <button type="submit">删除</button>
+                        </form>
+                        <form method="post" onsubmit="addNameToAction(this);">
+                            {% csrf_token %}
+                            <button type="submit">使用</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <a href="/index/" class="button">返回主页</a>
+</body>
+</html>

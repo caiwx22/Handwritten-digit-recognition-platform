@@ -1,0 +1,76 @@
+{% load static %}
+
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f3f3f3;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            max-height: 700px;
+            overflow-y: auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .image-frame {
+            margin: 0;
+            padding: 10px;
+            display: inline-block;
+        }
+        img {
+            max-width: 40%;
+            border-radius: 5px;
+        }
+        .label-box {
+            margin: 0;
+            padding: 10px;
+            background-color: #FFFFFF;
+            border-radius: 5px;
+            color: #555;
+            text-align: center;
+            font-size: 22px;
+        }
+        .button {
+            width: 90%;
+            display: inline-block;
+            margin: 0;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="image-frame">
+            <img src="{% static 'target.jpg' %}" alt="展示图片">
+        </div>
+
+        <div class="label-box">
+            <p>{{ label }}</p>
+        </div>
+        <a href="javascript:history.back()" class="button">返回</a>
+    </div>
+</body>
+</html>
